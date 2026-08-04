@@ -38,7 +38,15 @@ const CARD_SUB = 'text-[10px] text-(--ui-text-quaternary)'
 function formatUsd(n: number): string {
   if (n === 0 || n == null) return '$0.00'
   if (n >= 1) return `$${n.toFixed(2)}`
-  return `$${n.toFixed(4)}`
+  // For sub-dollar values, use enough decimals so micro-costs don't collapse to zero
+  // e.g. $0.000056 should show as $0.0001 (4) or $0.00006 (5) — never $0.00
+  const str = n.toFixed(6)
+  // Strip trailing zeros but keep at least 2 decimal places for readability
+  const cleaned = str.replace(/0+$/, '').replace(/\.$/, '')
+  // Ensure we never drop below 2 decimal places
+  const afterDot = cleaned.split('.')[1] ?? ''
+  if (afterDot.length < 2) return `$${cleaned}0${'0'.repeat(2 - afterDot.length)}`
+  return `$${cleaned}`
 }
 
 function sparklineColor(percent: number, hasData: boolean): string {
